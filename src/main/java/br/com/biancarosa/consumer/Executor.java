@@ -9,18 +9,26 @@ public class Executor {
      */
     public static void main(String[] args) {
         int numberOfThreads = 0;
+        String host = "";
+        int port = 0;
         try {
-            numberOfThreads = Integer.parseInt(args[0]);
+            try {
+                numberOfThreads = Integer.parseInt(args[0]);
+                host = args[1];
+                try {
+                    port = Integer.parseInt(args[2]);
+                    for (int i = 1; i <= numberOfThreads; ++i) {
+                        new Consumer("Consumidor"+i, host, port).start();
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("Porta precisa ser um número");
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Número de threads precisa ser um número");
+            }
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.err.println("Wrong number of args provided");
-        } catch (NumberFormatException e) {
-            System.err.println("Number of threads must be a number");
+            System.err.println("Passe como argumento o número de threads, o host do buffer e a porta");
         }
-
-        for (int i = 1; i <= numberOfThreads; ++i) {
-            new Consumer("Consumer"+i).start();
-        }
-
     }
 
 }

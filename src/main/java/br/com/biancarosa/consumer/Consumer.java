@@ -3,66 +3,58 @@ package br.com.biancarosa.consumer;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Random;
+import java.util.Date;
 
 public class Consumer extends Thread  {
 
     private String name;
+    private String host;
+    private int port;
     static boolean wait = false;
 
-    public Consumer(String name) {
+    public Consumer(String name, String host, int port) {
         this.name = name;
+        this.host = host;
+        this.port = port;
     }
 
-    private Integer getNumberFromBuffer() {
-        String host = "127.0.0.1";
+    private void getNumberFromBuffer() {
         try {
-            Socket echoSocket = new Socket(host, 8000);
+            Date startDate = new Date();
+            Socket echoSocket = new Socket(this.host, this.port);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
-            out.println(name);
-            System.out.println("Asked number from buffer");
+            out.println(this.name);
 
             //Get the return message from the server
             InputStream is = echoSocket.getInputStream();
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
             String message = br.readLine();
-            System.out.println("Message received from the server : " + message);
 
             String[] messArgs = message.split("\\?");
-
-            Integer number = null;
             // Checks if empty
             if (messArgs[1].equals("empty")) {
                 Consumer.wait = true;
+                System.out.println(name + " tentou retirar item do Buffer vazio");
             } else {
-                try {
-                    number = Integer.parseInt(messArgs[1]);
-                } catch (NumberFormatException e) {
-                    System.err.println("Not a number");
-                }
+                int number = Integer.parseInt(messArgs[1]);
+                Date endDate = new Date();
+                long timeDiff = endDate.getTime() - startDate.getTime();
+                System.out.println("Retirado o valor " + number  + " no Buffer pelo " + name + " em " + timeDiff + "ms");
             }
-
             echoSocket.close();
-
-            return number;
-        } catch (UnknownHostException e) {
-            System.err.println("Don't know about host " + host);
+        }  catch (UnknownHostException e) {
+            System.err.println("Host desconhecido : " + host);
         } catch (IOException e) {
-            System.err.println("Couldn't get I/O for the connection to " + host);
+            System.err.println("Não foi possível conectar ao host " + host);
         }
 
-        return null;
     }
 
     @Override
     public void run() {
         while(true) {
-            System.out.println("Asking number to buffer");
-            Integer n = getNumberFromBuffer();
-            if (n != null) {
-                System.out.println("Got "+n+" from buffer");
-            }
+            getNumberFromBuffer();
             try {
                 if (Consumer.wait) {
                     Thread.sleep(60000);
